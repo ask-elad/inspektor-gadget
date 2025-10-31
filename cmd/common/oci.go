@@ -319,20 +319,28 @@ func NewRunCommand(rootCmd *cobra.Command, runtime runtime.Runtime, hiddenColumn
 		if inFile != "" {
 			var f io.ReadCloser
 			var err error
-			if strings.HasPrefix(inFile, "http://") || strings.HasPrefix(inFile, "https://") {
+			closeF := true
+			if inFile == "-" { 
+				f = os.Stdin 
+				closeF = false
+			}else if strings.HasPrefix(inFile, "http://") || strings.HasPrefix(inFile, "https://") {
 				f, err = utils.DownloadFile(inFile)
 				if err != nil {
 					return fmt.Errorf("downloading gadget runtime manifest file %s: %w", inFile, err)
 				}
+				closeF = true
 			} else {
 				f, err = os.Open(inFile)
 				if err != nil {
 					return fmt.Errorf("opening gadget runtime manifest file %s: %w", inFile, err)
 				}
+				closeF = true
 			}
 
 			specs, err := gadgetmanifest.InstanceSpecsFromReader(f)
-			f.Close()
+			if closeF {
+				f.Close()
+			}
 			if err != nil {
 				return fmt.Errorf("reading gadget runtime manifest file %s: %w", inFile, err)
 			}

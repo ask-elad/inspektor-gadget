@@ -18,6 +18,7 @@ import (
 	"context"
 	"embed"
 	"errors"
+	"io"
 	"fmt"
 	"os"
 	"os/exec"
@@ -163,9 +164,16 @@ func runBuild(cmd *cobra.Command, opts *cmdOpts) error {
 	var err error
 
 	if opts.fileChanged {
-		buildContent, err = os.ReadFile(opts.file)
-		if err != nil {
-			return fmt.Errorf("reading build file: %w", err)
+		if opts.file == "-" {
+			buildContent, err = io.ReadAll(os.Stdin)
+			if err != nil {
+				return fmt.Errorf("reading build file from stdin: %w", err)
+			}
+		} else {
+			buildContent, err = os.ReadFile(opts.file)
+			if err != nil {
+				return fmt.Errorf("reading build file: %w", err)
+			}
 		}
 	} else {
 		// The user specified the path but not the file. Use the default file build.yaml
